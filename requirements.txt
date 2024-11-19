@@ -1,0 +1,8 @@
+ammar_filter_post
+boto3
+botocore
+Django
+django-cors-headers
+djangorestframework
+PyJWT
+gunicorn
