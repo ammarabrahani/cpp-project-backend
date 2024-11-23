@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import CreatePostView, DeletePostView, GetCommentsByPostIdView, GetPostByUsernameView, GetPostsView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, filterPostByLikeView
+from .views import CreatePostView, DeletePostView, GetAllCommentsView, GetCommentsByPostIdView, GetPostByUsernameView, GetPostsView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, UpdatePostAPI, filterPostByLikeView
 
 urlpatterns = [
     path('register', RegisterView.as_view(), name='register'),
@@ -24,9 +24,11 @@ urlpatterns = [
     path('posts/create', CreatePostView.as_view(), name='create_post'),
     path('posts/<str:username>', GetPostByUsernameView.as_view(), name='get_post_by_username'),
     path('posts/<str:post_id>/delete', DeletePostView.as_view(), name='delete_post'),
+    path('posts/<str:post_id>/update', UpdatePostAPI.as_view(), name='update_post'),
     path('posts/<str:post_id>/like', LikePostView.as_view(), name='add_like'),
     path('posts/<str:post_id>/unlike', UnLikePostView.as_view(), name='un_like'),
     path('posts/<str:post_id>/comment/create', CommentPostView.as_view(), name='add_comment'),
     path('posts/<str:post_id>/comments', GetCommentsByPostIdView.as_view(), name='add_comment'),
+    path('posts/comments/all', GetAllCommentsView.as_view(), name='all_comments'),
     path('trending/posts', filterPostByLikeView.as_view(), name='sorted_post'),
 ]

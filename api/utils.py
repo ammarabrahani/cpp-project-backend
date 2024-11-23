@@ -4,6 +4,8 @@ import datetime
 from django.conf import settings
 from datetime import datetime, timedelta, timezone
 from rest_framework.exceptions import AuthenticationFailed
+import requests
+from django.http import JsonResponse
 
 # Secret key for encoding and decoding JWT tokens
 SECRET_KEY = settings.SECRET_KEY
@@ -47,3 +49,49 @@ def dynamodb_client():
                 aws_session_token = settings.AWS_SESSION_TOKEN
             )
     return client
+
+
+def send_email(request):
+    # The URL of the send_email API
+    external_api_url = settings.SEND_EMAIL_URL
+
+    # Data to send to the send_email API
+    if request["is_wellcome_email"]:
+        
+        data = {
+            "username": request["username"],
+            "email": request["email"],
+            "is_wellcome_email": request["is_wellcome_email"]
+        }
+    else:
+
+        data = {
+            "username": request["username"],
+            "email": request["email"],
+            "post_id": request["post_id"],
+            "is_wellcome_email": request["is_wellcome_email"]
+        }
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    try:
+        # Make the POST request to the API
+        response = requests.post(external_api_url, json=data, headers=headers)
+        response.raise_for_status()
+
+        # Parse the JSON response from the API
+        api_data = response.json()
+
+        # Return the API's response
+        return JsonResponse({
+            "success": True,
+            "data": api_data
+        }, status=response.status_code)
+
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)

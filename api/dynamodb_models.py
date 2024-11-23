@@ -1,5 +1,6 @@
 from datetime import datetime
 from ammar_filter_post import get_posts_sorted_by_likes
+from boto3.dynamodb.conditions import Key
 
 class DynamoDBUserManager:
     def __init__(self,DYNAMODB_TABLE_NAME, dynamodb):
@@ -38,11 +39,50 @@ class DynamoDBPostManager:
         response = self.table.get_item(Key={'username': f"{username}"})
         return response.get('Item')
     
+    def get_post_by_post_id(self, post_id):
+        response = self.table.query(
+            KeyConditionExpression=Key('post_id').eq(post_id)
+        )
+        items = response.get('Items', [])
+        return items[0] if items else None
+
     def get_all_post(self):
         response = self.table.scan()
         posts = response.get('Items', [])
         return posts
-    
+    def update_post(self, post_id, username, updates):
+        """
+        Dynamically update a post with the given `post_id` and `username`.
+        """
+        
+        # Dynamically build UpdateExpression and ExpressionAttributeValues
+        update_expression = "SET " + ", ".join([f"#{key} = :{key}" for key in updates.keys()])
+        expression_attribute_values = {f":{key}": value for key, value in updates.items()}
+        expression_attribute_names = {f"#{key}": key for key in updates.keys()}
+
+        try:
+            # Perform the update operation
+            response = self.table.update_item(
+                Key={
+                    'post_id': post_id,
+                    'username': username
+                },
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+                ExpressionAttributeNames=expression_attribute_names,
+                ConditionExpression=Key('username').eq(username),  # Ensures only the owner can update
+                ReturnValues="ALL_NEW"  # Return updated item
+            )
+
+            # Return the updated item
+            return response.get('Attributes', {})
+
+        except self.table.meta.client.exceptions.ConditionalCheckFailedException:
+            raise PermissionError("You are not authorized to update this post")
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while updating the post: {str(e)}")
+
+
     def delete_post(self, post_id, username):
         # Delete post from DynamoDB
         response = self.table.delete_item(
@@ -116,6 +156,7 @@ class DynamoDBPostManager:
     
     def update_post_comment_count(self, post_id, username):
         post_data = self.table.get_item(Key={'post_id': f"{post_id}" , 'username': username}).get('Item')
+        print(f"POST_DATA: {post_data}")
         updated_at = datetime.utcnow().isoformat()
         response = self.table.update_item(
                         Key={
@@ -203,7 +244,7 @@ class DynamoDBCommentManager:
         
         return response
     
-    def get_all_comments_by_postId(self):
+    def get_all_comments(self):
         response = self.table.scan()
         comments = response.get('Items', [])
         return comments

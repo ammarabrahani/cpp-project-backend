@@ -24,7 +24,7 @@ SECRET_KEY = 'django-insecure-#j7_%$l(5pi*4j8ky=!1u68dys6yo((kdkzfold4r+v01f=y@c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["social-app-prod.us-east-1.elasticbeanstalk.com"]
+ALLOWED_HOSTS = ["social-app-prod.us-east-1.elasticbeanstalk.com", "localhost"]
 CORS_ALLOW_ALL_ORIGINS = True
 
 # Application definition
@@ -60,11 +60,12 @@ REST_FRAMEWORK = {
     ),
 }
 
-AWS_ACCESS_KEY_ID = 'ASIA6ODVARC3VFKC5UYQ'
-AWS_SECRET_ACCESS_KEY = 'N+FZMeBo3b5e1rebHZ2R7b++jbi/9dxzCqT6RcbD'
-AWS_SESSION_TOKEN = 'IQoJb3JpZ2luX2VjEN///////////wEaCXVzLXdlc3QtMiJHMEUCIBJcBYAiOltMvt9N35cx2iJwkz3R4ePYTTr8NvMBpvasAiEA1Q6jiZn4VvbsM4S/bcy8uFbeQzvfdQzo+5OEt4sa4pUqtAIIeBAAGgw5OTIzODI4NDcxNTkiDEUhkeitDuMwFn/yIyqRAi4uokrGV3TB6+qvL2bICoW9gNjt0QQjqV+h6GMV7bgasTSXsJgY3IBhA5m6yh4GhETYCDs7SxO8hrvcKJUdg1W+K/m143qzb14ZrVGcSaEYsl67kgChawInDABj3PCj8/Ogaweo1FIzDE6H3LWAK4/s/RCTsl7nCiRC9qYsPvaz4pPHYSlWOuZ3xkMqMyxvI8v/BGQfO6MzvP5hODfXqlfsnHV1+yvlu1X5f6jWjQ4DoNi2mbLtfLT7WTGg67vpYiLczVf2B2iguNgbPIvNNyg2FajtawEQxKraHVTTyxwEqS/Y3eoVRvyzoZjsjv78oZSZTIU1303+vGD8elTEJfk6Lu7/J7agl+o2BXubBkgFFjD81PK5BjqdAUA4A7GIp63+R+z6wMXnHU+hRXHscqHMaTvYYS3tT9vP+y59hMOLacmqQw5ZCMfYe80Csjb6nxQtR4+yuqQeutgjkAMgGDDjhJZy4bvKBXjaFMtMmlz8uwrKJTn+Ies0gEMQ2ih/xAM8ikavnZlbIqzz3f+QXemI5Nc3xqp0CSPeANf+3vR4GZ9stEzdR0+fPxTTVz3dfjwKBDo/Oe8='
+AWS_ACCESS_KEY_ID = 'ASIA6ODVARC3TQ7RXQYD'
+AWS_SECRET_ACCESS_KEY = 'nCTjpb7Ef6hU5mZVItTzY/GgaG8i7if8JEUMXrSj'
+AWS_SESSION_TOKEN = 'IQoJb3JpZ2luX2VjED0aCXVzLXdlc3QtMiJHMEUCIQCbX3w98tPNnQufP6EOPt92hgs15Y+JmENheN5NYoaUjwIgUmnQsK4GptQgQzZ9SZNI8KNXJ4CsFGzjf2VnDEtDcOMqvQII1v//////////ARAAGgw5OTIzODI4NDcxNTkiDMGRDjQ1Nn/+ynnxqSqRAlXO7lJ438fr4CqxYiKNpnScbyciQTtHB2kxnRrV4MZw45++KLrgoXc/uPYR22f2aoHPJVoPfgvt/nWPd/89wyH/i2ERiqW7CVGJZbcROMhyY6/hCNHty4WR1BktX8tZUQ2SwCPhISdL2lTMf/po2E/Quyz4bBSStKjdMisFCklF7VOqo3LYT3UuHXIuq6jzCFsG3aBgQgjUSKmXzC+fcWEofc/mH5lTb3kZg6Xwtxj8TCjka/Fq3yIKbZG9ELvggDtx7weBqARcrWYIwth68lP4QhTgsh5QhKm75uko620L/P+6IsuC383uiNN6Y2lwb3mdm6leRcQP1SFNgEdyon+9AzX8oKJhOOL+mDL3xzswjzDwm4e6BjqdAZsI9FOVpA4bYY4G+wvbmq+kWjcIw7Dpy15ji23iPMsPcfUXGzuzVfQWLJhP1bz5bfwKsst469fnOn1JfrzMCVRBrdB0ABSa4YhOLDEsYueyxzB3fln4DplTDU9vN/PyMB78HiUy6gmICxRwtS8NMtTCYX92ZjkteiRh4TeQS+WfcfkhQGa3jQjpOkwRJPViFIW4D2Aw4YMsJ7FQ/lo='
 AWS_S3_BUCKET_NAME = 'social-media-store'
 AWS_REGION = 'us-east-1'
+SEND_EMAIL_URL = "https://vv8apl3j3e.execute-api.us-east-1.amazonaws.com/prod/send-email"
 DYNAMODB_USER_TABLE_NAME = 'Users'
 DYNAMODB_POST_TABLE_NAME = 'Posts'
 DYNAMODB_LIKE_TABLE_NAME = 'Likes'
