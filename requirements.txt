@@ -6,3 +6,5 @@ django-cors-headers
 djangorestframework
 PyJWT
 gunicorn
+requests
+Pillow
