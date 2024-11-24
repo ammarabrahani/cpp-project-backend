@@ -9,6 +9,11 @@ from .dynamodb_models import DynamoDBUserManager
 dynamodb_client = dynamodb_client()
 db_user = DynamoDBUserManager(settings.DYNAMODB_USER_TABLE_NAME, dynamodb_client)
 
+class UserObject:
+    def __init__(self, username):
+        self.username = username
+        self.is_authenticated = True
+
 class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         """
@@ -18,12 +23,14 @@ class JWTAuthentication(authentication.BaseAuthentication):
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
             try:
-                payload = decode_jwt_token(token)
-                user = db_user.get_user(payload['username'])
+                response = decode_jwt_token(token)
+                user = db_user.get_user(response['username'])
+                if not user:
+                    raise exceptions.AuthenticationFailed('User not found')
             except (jwt.DecodeError, jwt.ExpiredSignatureError):
                 raise exceptions.AuthenticationFailed('Invalid or expired token')
             except KeyError:
                 raise exceptions.AuthenticationFailed('Token missing username')
 
-            return (user, token)
+            return (UserObject(username=user['username']), token)
         return None

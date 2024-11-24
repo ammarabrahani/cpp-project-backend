@@ -9,7 +9,7 @@ from rest_framework import status
 from django.conf import settings
 from .utils import create_jwt_token, s3_client, dynamodb_client, send_email
 from .dynamodb_models import DynamoDBCommentManager, DynamoDBLikeManager, DynamoDBUserManager, DynamoDBPostManager
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from botocore.exceptions import ClientError
 from PIL import Image
 import mimetypes
@@ -67,9 +67,9 @@ class LoginView(APIView):
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 class CreatePostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def post(self, request):
-        username = request.user.get('username')  # Get user details from request
+        username = request.user.username  # Get user details from request
         caption = request.data.get('caption', '')
         image = request.FILES.get('image')
 
@@ -131,12 +131,11 @@ class CreatePostView(APIView):
 
         except Exception as e:
             return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-class UpdatePostAPI(APIView):
-    permission_classes = [AllowAny]
+class UpdatePostView(APIView):
+    permission_classes = [IsAuthenticated]
     def put(self, request, post_id):
         # Extract user and post details
-        username = request.user.get('username')  # Logged-in user's username
+        username = request.user.username  # Logged-in user's username
         new_caption = request.data.get('caption')
         new_image = request.FILES.get('image')
         s3_bucket_name = settings.AWS_S3_BUCKET_NAME
@@ -214,15 +213,106 @@ class UpdatePostAPI(APIView):
         except Exception as e:
             return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class GetPostsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
+        print(f"Authenticated User: {request.user}")
+        print(f"Authentication Token: {request.auth}")
         posts = db_post.get_all_post()
         return Response(posts, status=status.HTTP_200_OK)
 
+class GetUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        print(f"Authenticated User: {request.user}")
+        print(f"Authentication Token: {request.auth}")
+        users = db_user.get_all_user()
+        return Response(users, status=status.HTTP_200_OK)
+
+class DeleteUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, username):
+        # Ensure the authenticated user is the one being deleted
+        if username != request.user.username:
+            return Response(
+                {"error": "You can only delete your own account"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Attempt to delete the user from the database
+        try:
+            user_delete_response = db_user.delete_user(username)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to delete user: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Check if the user was actually deleted
+        if not user_delete_response or "Attributes" not in user_delete_response:
+            return Response(
+                {"error": "User not found or could not be deleted"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response(
+            {"message": "User deleted successfully"},
+            status=status.HTTP_200_OK
+        )
+
+class UpdateUserView(APIView):
+    permission_classes = [IsAuthenticated]
+    def put(self, request, username):
+        # Ensure the authenticated user is the one being updated
+        if username != request.user.username:
+            return Response(
+                {"error": "You can only update your own account"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Extract the data from the request
+        data = request.data
+        
+        # Validate that at least one field is provided for updating
+        allowed_fields = ['password', 'email']
+        if not any(field in data for field in allowed_fields):
+            return Response(
+                {"error": "No valid fields provided for update"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Prepare the updated data
+        updated_data = {}
+        if 'password' in data:
+            updated_data['password'] = make_password(data['password'])
+        if 'email' in data:
+            updated_data['email'] = data['email']
+        
+        # Attempt to update the user in the database
+        try:
+            update_response = db_user.update_user(username, updated_data)
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to update user: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        # Check if the update was successful
+        if not update_response or "Attributes" not in update_response:
+            return Response(
+                {"error": "User not found or update failed"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        return Response(
+            {"message": "User updated successfully", "updated_data": update_response["Attributes"]},
+            status=status.HTTP_200_OK
+        )
+
+
 class GetPostByUsernameView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request, username):
         posts = db_post.get_all_post()
         all_post = [post for post in posts if post.get('username') == username]
@@ -233,9 +323,9 @@ class GetPostByUsernameView(APIView):
 
 # Users can delete a post by its post_id.
 class DeletePostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def delete(self, request, post_id):
-        username = request.user.get('username')
+        username = request.user.username
         post_response = db_post.delete_post(post_id, username=username)
         like_response = db_like.delete_like_by_post_id(post_id, username)
         comment_response = db_comment.delete_comments_by_post_id(post_id, username)
@@ -247,10 +337,10 @@ class DeletePostView(APIView):
         return Response({"message": "Post deleted successfully"}, status=status.HTTP_200_OK)
 
 class LikePostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def post(self, request, post_id):
         current_time = datetime.utcnow().isoformat()
-        username = request.user.get('username')  # Ensure request.user has 'username' attribute
+        username = request.user.username  # Ensure request.user has 'username' attribute
         post_username = db_post.get_post_by_post_id(post_id)
         email = db_user.get_user(post_username["username"]).get("email")
         if not username:
@@ -289,7 +379,7 @@ class LikePostView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class filterPostByLikeView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         posts = db_post.filter_all_post_by_likes()
         if not posts:
@@ -298,9 +388,9 @@ class filterPostByLikeView(APIView):
         return Response(posts, status=status.HTTP_200_OK)
 
 class UnLikePostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def post(self, request, post_id):
-        username = request.user.get('username')  # Ensure request.user has 'username' attribute
+        username = request.user.username  # Ensure request.user has 'username' attribute
         post_username = db_post.get_post_by_post_id(post_id)
         if not username:
             return Response({"error": "username is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -324,10 +414,10 @@ class UnLikePostView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CommentPostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def post(self, request, post_id):
         current_time = datetime.utcnow().isoformat()
-        username = request.user.get('username')  # Ensure request.user has 'username' attribute
+        username = request.user.username  # Ensure request.user has 'username' attribute
         content = request.data.get('content')
         post_username = db_post.get_post_by_post_id(post_id)
         if not username or not content:
@@ -358,7 +448,7 @@ class CommentPostView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetCommentsByPostIdView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request, post_id):
         comments = db_comment.get_all_comments()
         all_comment = [comment for comment in comments if comment.get('post_id') == post_id]
@@ -368,7 +458,7 @@ class GetCommentsByPostIdView(APIView):
         return Response(all_comment, status=status.HTTP_200_OK)
     
 class GetAllCommentsView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     def get(self, request):
         posts = db_comment.get_all_comments()
         return Response(posts, status=status.HTTP_200_OK)

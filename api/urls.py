@@ -15,16 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import CreatePostView, DeletePostView, GetAllCommentsView, GetCommentsByPostIdView, GetPostByUsernameView, GetPostsView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, UpdatePostAPI, filterPostByLikeView
+from .views import CreatePostView, DeletePostView, DeleteUserView, GetAllCommentsView, GetCommentsByPostIdView, GetPostByUsernameView, GetPostsView, GetUsersView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, UpdatePostView, UpdateUserView, filterPostByLikeView
 
 urlpatterns = [
     path('register', RegisterView.as_view(), name='register'),
     path('login', LoginView.as_view(), name='login'),
     path('posts', GetPostsView.as_view(), name='get_posts'),
+    path('users', GetUsersView.as_view(), name='get_users'),
+    path('users/<str:username>/delete', DeleteUserView.as_view(), name='delete_user'),
+    path('users/<str:username>/update', UpdateUserView.as_view(), name='update_user'),
     path('posts/create', CreatePostView.as_view(), name='create_post'),
     path('posts/<str:username>', GetPostByUsernameView.as_view(), name='get_post_by_username'),
     path('posts/<str:post_id>/delete', DeletePostView.as_view(), name='delete_post'),
-    path('posts/<str:post_id>/update', UpdatePostAPI.as_view(), name='update_post'),
+    path('posts/<str:post_id>/update', UpdatePostView.as_view(), name='update_post'),
     path('posts/<str:post_id>/like', LikePostView.as_view(), name='add_like'),
     path('posts/<str:post_id>/unlike', UnLikePostView.as_view(), name='un_like'),
     path('posts/<str:post_id>/comment/create', CommentPostView.as_view(), name='add_comment'),

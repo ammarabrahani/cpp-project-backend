@@ -18,6 +18,44 @@ class DynamoDBUserManager:
             }
         )
 
+    def delete_user(self, username):
+        # Query to delete a user
+        response = self.table.delete_item(
+            Key={"username": username}, 
+            ReturnValues="ALL_OLD"
+        )
+
+        return response
+    def update_user(self, username, updates):
+        """
+        Dynamically update a user with the given `username`.
+        """
+        
+        # Dynamically build UpdateExpression and ExpressionAttributeValues
+        update_expression = "SET " + ", ".join([f"#{key} = :{key}" for key in updates.keys()])
+        expression_attribute_values = {f":{key}": value for key, value in updates.items()}
+        expression_attribute_names = {f"#{key}": key for key in updates.keys()}
+
+        try:
+            # Perform the update operation
+            response = self.table.update_item(
+                Key={
+                    'username': username
+                },
+                UpdateExpression=update_expression,
+                ExpressionAttributeValues=expression_attribute_values,
+                ExpressionAttributeNames=expression_attribute_names,
+                ConditionExpression=Key('username').eq(username),  # Ensures only the owner can update
+                ReturnValues="ALL_NEW"  # Return updated item
+            )
+
+            # Return the updated item
+            return response
+        except self.table.meta.client.exceptions.ConditionalCheckFailedException:
+            raise PermissionError("You are not authorized to update this user")
+        except Exception as e:
+            raise RuntimeError(f"An error occurred while updating the post: {str(e)}")
+    
     def get_user(self, username):
         response = self.table.get_item(Key={'username': f"{username}"})
         return response.get('Item')
@@ -81,7 +119,6 @@ class DynamoDBPostManager:
             raise PermissionError("You are not authorized to update this post")
         except Exception as e:
             raise RuntimeError(f"An error occurred while updating the post: {str(e)}")
-
 
     def delete_post(self, post_id, username):
         # Delete post from DynamoDB
