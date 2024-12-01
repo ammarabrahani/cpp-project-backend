@@ -12,7 +12,6 @@ from .dynamodb_models import DynamoDBCommentManager, DynamoDBLikeManager, Dynamo
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from botocore.exceptions import ClientError
 from PIL import Image
-import mimetypes
 
 # Initialize Client for S3, DynamoDB
 s3_client = s3_client()
@@ -336,6 +335,13 @@ class DeletePostView(APIView):
 
         return Response({"message": "Post deleted successfully"}, status=status.HTTP_200_OK)
 
+class GetLikeView(APIView): 
+    permission_classes = [IsAuthenticated]
+    def get(self, request, post_id):
+        print(f"post_id, {post_id}")
+        likes = db_like.get_all_likes_by_post(post_id)
+        return Response(likes, status=status.HTTP_200_OK)
+    
 class LikePostView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, post_id):
@@ -352,6 +358,7 @@ class LikePostView(APIView):
                     'post_id': post_id,
                     'username': username,
                     'liked_at': current_time,
+                    'like_post': True,
                 }
             response_like = db_like.add_like(like_data)
 

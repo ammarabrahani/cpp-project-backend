@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import CreatePostView, DeletePostView, DeleteUserView, GetAllCommentsView, GetCommentsByPostIdView, GetPostByUsernameView, GetPostsView, GetUsersView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, UpdatePostView, UpdateUserView, filterPostByLikeView
+from .views import CreatePostView, DeletePostView, DeleteUserView, GetAllCommentsView, GetCommentsByPostIdView, GetLikeView, GetPostByUsernameView, GetPostsView, GetUsersView, RegisterView, LoginView, LikePostView, CommentPostView, UnLikePostView, UpdatePostView, UpdateUserView, filterPostByLikeView
 
 urlpatterns = [
     path('register', RegisterView.as_view(), name='register'),
@@ -28,6 +28,7 @@ urlpatterns = [
     path('posts/<str:username>', GetPostByUsernameView.as_view(), name='get_post_by_username'),
     path('posts/<str:post_id>/delete', DeletePostView.as_view(), name='delete_post'),
     path('posts/<str:post_id>/update', UpdatePostView.as_view(), name='update_post'),
+    path('posts/<str:post_id>/like/all', GetLikeView.as_view(), name='get_likes'),
     path('posts/<str:post_id>/like', LikePostView.as_view(), name='add_like'),
     path('posts/<str:post_id>/unlike', UnLikePostView.as_view(), name='un_like'),
     path('posts/<str:post_id>/comment/create', CommentPostView.as_view(), name='add_comment'),

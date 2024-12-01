@@ -1,5 +1,5 @@
 from datetime import datetime
-from ammar_filter_post import get_posts_sorted_by_likes
+from ammar_filter_post import get_posts_sorted_by_likes  # importing library
 from boto3.dynamodb.conditions import Key
 
 class DynamoDBUserManager:
@@ -139,7 +139,7 @@ class DynamoDBPostManager:
             response = self.table.update_item(
                         Key={
                             'post_id': post_data['post_id'],
-                            'username': post_data['username'] 
+                            'username': post_data['username'], 
                         },
                         UpdateExpression="""
                             SET caption = :caption,
@@ -238,6 +238,15 @@ class DynamoDBLikeManager:
                 ConditionExpression="attribute_not_exists(post_id) AND attribute_not_exists(username)"
             )
         return response
+     
+    def get_all_likes_by_post(self, post_id):
+        response = self.table.query(
+            KeyConditionExpression=Key('post_id').eq(post_id)
+        )
+        items = response.get('Items', [])
+        return items
+
+    
     
     def delete_like_by_post_id(self, post_id, username):
         # Delete post from DynamoDB
